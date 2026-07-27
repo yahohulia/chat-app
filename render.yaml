@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: chat-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      # NODE_ENV is intentionally NOT set to "production" here: with it set,
+      # `npm install` skips devDependencies, which breaks the postinstall
+      # hook (`mate-scripts update` — see backend/package.json) and fails
+      # the build. Nothing in the app reads NODE_ENV, so it's safe to omit.
+      # Neon connection string (use the non-pooled/direct one), e.g.:
+      # postgresql://user:password@ep-xxxx.neon.tech/dbname?sslmode=require
+      - key: DATABASE_URL
+        sync: false
+      # Comma-separated list of allowed frontend origins, e.g. your Vercel
+      # production domain. Vercel preview URLs (*.vercel.app) are allowed
+      # automatically, so they don't need to be listed here.
+      - key: CLIENT_HOST
+        sync: false

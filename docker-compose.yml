@@ -1,0 +1,70 @@
+services:
+  chat-db:
+    image: postgres:16-alpine
+    container_name: chat-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-chat_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chat_password}
+      POSTGRES_DB: ${POSTGRES_DB:-chat_db}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - chat-db-data:/var/lib/postgresql/data
+    networks:
+      - chat-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-chat_user} -d ${POSTGRES_DB:-chat_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  chat-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chat-backend
+    ports:
+      - "${PORT:-3005}:3005"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      DB_HOST: chat-db
+      DB_PORT: 5432
+      DB_USERNAME: ${POSTGRES_USER:-chat_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-chat_password}
+      DB_DATABASE: ${POSTGRES_DB:-chat_db}
+      PORT: 3005
+      CLIENT_HOST: ${CLIENT_HOST:-http://localhost:5173}
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      chat-db:
+        condition: service_healthy
+    networks:
+      - chat-network
+    command: npm start
+
+  chat-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: chat-frontend
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - chat-backend
+    networks:
+      - chat-network
+    command: npm run dev -- --host 0.0.0.0
+
+networks:
+  chat-network:
+    driver: bridge
+
+volumes:
+  chat-db-data:
