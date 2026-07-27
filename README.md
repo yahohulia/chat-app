@@ -4,7 +4,7 @@ A full-featured real-time chat application. The project includes a Vue 3 fronten
 
 ## 🚀 Live Demo
 
-**Check it**: _Not deployed yet_
+**DEMO**: [Chat App](https://chat-app-ir7i.vercel.app/)
 
 ## 🏅 Features
 
